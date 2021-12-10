@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>XcelEnergy Colorado Electricity Cost Estimator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            color: #444;
+            padding: 1rem;
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        h1, h2, h3 {
+            margin: 0 0 1.25rem 0;
+        }
+
+        th {
+            text-align: left;
+        }
+
+        td {
+            border: 1px solid #aaa;
+            padding: 0.25rem;
+        }
+
+        th:last-child, td:last-child {
+            padding-left: 1rem;
+        }
+
+        table:first-of-type {
+            margin-top: 3rem;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-bottom: 3rem;
+        }
+
+        caption {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            text-decoration: underline;
+        }
+
+        summary {
+            font-size: 1.25rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        input, select, textarea {
+            font-size: 1rem;
+        }
+
+        label[for] {
+            width: 12rem;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body x-data>
+
+<h1>XcelEnergy Electricity Cost Estimator for Colorado</h1>
+<p>
+    This calculator provides estimated total cost of electricity usage based on XcelEnergy's rate sheets.
+</p>
+<p>
+    I made this because their rate sheet is difficult to navigate and as far as I can tell they do
+    not provide a tool to make rate comparisons.
+</p>
+<p>
+    If you find inaccuracies, please file an issue <a href="https://github.com/joncfoo/xcel-co-rates/issues">here</a>.
+</p>
+
+<h2>Rates</h2>
+<p>
+    Source:
+    <em><a href="https://www.xcelenergy.com/staticfiles/xe-responsive/Company/Rates%20&%20Regulations/Summary_of_Electric_Rates_as_of_10-01-21.pdf">Summary
+        of Electric Rates as of 10-01-21 (PDF)</a></em>
+    listed <a href="https://www.xcelenergy.com/company/rates_and_regulations/rates/rate_books">here</a>.
+</p>
+
+<h3>Enter your usage:</h3>
+
+<p>This information can be found on your bill.</p>
+
+<p>
+    Season:
+    <label><input type="radio" name="season" value="winter" x-model="$store.season.value"> Winter</label>
+    <label><input type="radio" name="season" value="summer" x-model="$store.season.value"> Summer</label>
+</p>
+
+<p>
+    <label for="on-peak">On-Peak Energy (kWh):</label>
+    <input inputmode="numeric" pattern="\d+" id="on-peak" x-model.number="$store.kWh.on">
+</p>
+<p>
+    <label for="mid-peak">Mid-Peak Energy (kWh):</label>
+    <input inputmode="numeric" pattern="\d+" id="mid-peak" x-model.number="$store.kWh.mid">
+</p>
+<p>
+    <label for="off-peak">Off-Peak Energy (kWh):</label>
+    <input inputmode="numeric" pattern="\d+" id="off-peak" x-model.number="$store.kWh.off">
+</p>
+<p>
+    <label for="total">Total energy usage (kWh):</label>
+    <input disabled x-model="$store.kWh.total">
+</p>
+
+<table>
+    <caption>Estimated Cost</caption>
+    <thead>
+    <tr>
+        <th>Schedule</th>
+        <th>Total (≈)</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>Residential (R)</td>
+        <td x-text="'$' + $store.r.total"></td>
+    </tr>
+    <tr>
+        <td>Residential Energy Time-Of-Use (RE-TOU)</td>
+        <td x-text="'$' + $store.retou.total"></td>
+    </tr>
+    <tr>
+        <td>Residential General Opt-Out (R-OO)</td>
+        <td x-text="'$' + $store.roo.total"></td>
+    </tr>
+    <tr>
+        <td>Residential Demand (RD)</td>
+        <td x-text="'$' + $store.rd.total"></td>
+    </tr>
+    <tr>
+        <td>Residential Demand - Time Differentiated Rates (RD-TDR)</td>
+        <td x-text="'$' + $store.rdtdr.total"></td>
+    </tr>
+    </tbody>
+</table>
+
+<details>
+    <summary>Breakdown</summary>
+
+    <table>
+        <caption>Residential (R)</caption>
+        <thead>
+        <tr>
+            <th>Charge Type</th>
+            <th>Charge</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Service and Facility</td>
+            <td x-text="$store.r.serviceFacilityCharge"></td>
+        </tr>
+        <tr>
+            <td><span x-text="$store.season.label"></span> Energy per kWh &mdash; <span x-text="$store.r.energyRate"></span></td>
+            <td x-text="$store.r.energyCost"></td>
+        </tr>
+        <tr>
+            <td>Energy Assistance Charge</td>
+            <td x-text="$store.fees.energyAssistance"></td>
+        </tr>
+        <tr>
+            <td>Renewable Energy Standard Adjustment</td>
+            <td x-text="$store.fees.renewableAdjustment"></td>
+        </tr>
+        <tr>
+            <td>Colorado Energy Plan Adjustment</td>
+            <td x-text="$store.fees.coPlanAdjustment"></td>
+        </tr>
+        <tr>
+            <td><strong>Subtotal</strong></td>
+            <td><strong x-text="$store.r.subtotal"></strong></td>
+        </tr>
+        <tr>
+            <td>Franchise Fee</td>
+            <td x-text="$store.r.franchiseFee"></td>
+        </tr>
+        <tr>
+            <td>Sales Tax</td>
+            <td x-text="$store.r.salesTax"></td>
+        </tr>
+        <tr>
+            <td><strong>Total (≈)</strong></td>
+            <td><strong x-text="$store.r.total"></strong></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <table>
+        <caption>Residential Energy Time-Of-Use (RE-TOU)</caption>
+        <thead>
+        <tr>
+            <th>Charge Type</th>
+            <th>Charge</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Service and Facility</td>
+            <td x-text="$store.retou.serviceFacilityCharge"></td>
+        </tr>
+        <tr>
+            <td><span x-text="$store.season.label"></span> On-Peak Energy per kWh &mdash; <span
+                    x-text="$store.retou.onPeakRate"></span></td>
+            <td x-text="$store.retou.onPeakCost"></td>
+        </tr>
+        <tr>
+            <td><span x-text="$store.season.label"></span> Shoulder Energy per kWh &mdash; <span
+                    x-text="$store.retou.midPeakRate"></span></td>
+            <td x-text="$store.retou.midPeakCost"></td>
+        </tr>
+        <tr>
+            <td><span x-text="$store.season.label"></span> Off-Peak Energy per kWh &mdash; <span
+                    x-text="$store.retou.offPeakRate"></span></td>
+            <td x-text="$store.retou.offPeakCost"></td>
+        </tr>
+        <tr>
+            <td>Energy Assistance Charge</td>
+            <td x-text="$store.fees.energyAssistance"></td>
+        </tr>
+        <tr>
+            <td>Renewable Energy Standard Adjustment</td>
+            <td x-text="$store.fees.renewableAdjustment"></td>
+        </tr>
+        <tr>
+            <td>Colorado Energy Plan Adjustment</td>
+            <td x-text="$store.fees.coPlanAdjustment"></td>
+        </tr>
+        <tr>
+            <td><strong>Subtotal</strong></td>
+            <td><strong x-text="$store.retou.subtotal"></strong></td>
+        </tr>
+        <tr>
+            <td>Franchise Fee</td>
+            <td x-text="$store.retou.franchiseFee"></td>
+        </tr>
+        <tr>
+            <td>Sales Tax</td>
+            <td x-text="$store.retou.salesTax"></td>
+        </tr>
+        <tr>
+            <td><strong>Total (≈)</strong></td>
+            <td><strong x-text="$store.retou.total"></strong></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <table>
+        <caption>Residential General Opt-Out (R-OO)</caption>
+        <thead>
+        <tr>
+            <th>Charge Type</th>
+            <th>Charge</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Service and Facility</td>
+            <td x-text="$store.roo.serviceFacilityCharge"></td>
+        </tr>
+        <tr>
+            <td><span x-text="$store.season.label"></span> Energy per kWh &mdash; <span x-text="$store.roo.energyRate"></span></td>
+            <td x-text="$store.roo.energyCost"></td>
+        </tr>
+        <tr>
+            <td>Energy Assistance Charge</td>
+            <td x-text="$store.fees.energyAssistance"></td>
+        </tr>
+        <tr>
+            <td>Renewable Energy Standard Adjustment</td>
+            <td x-text="$store.fees.renewableAdjustment"></td>
+        </tr>
+        <tr>
+            <td>Colorado Energy Plan Adjustment</td>
+            <td x-text="$store.fees.coPlanAdjustment"></td>
+        </tr>
+        <tr>
+            <td><strong>Subtotal</strong></td>
+            <td><strong x-text="$store.roo.subtotal"></strong></td>
+        </tr>
+        <tr>
+            <td>Franchise Fee</td>
+            <td x-text="$store.roo.franchiseFee"></td>
+        </tr>
+        <tr>
+            <td>Sales Tax</td>
+            <td x-text="$store.roo.salesTax"></td>
+        </tr>
+        <tr>
+            <td><strong>Total (≈)</strong></td>
+            <td><strong x-text="$store.roo.total"></strong></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <table>
+        <caption>Residential Demand (RD)</caption>
+        <thead>
+        <tr>
+            <th>Charge Type</th>
+            <th>Charge</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Service and Facility</td>
+            <td x-text="$store.rd.serviceFacilityCharge"></td>
+        </tr>
+        <tr>
+            <td><span x-text="$store.season.label"></span> Demand per kW &mdash; <span x-text="$store.rd.demandRate"></span></td>
+            <td x-text="$store.rd.demandCost"></td>
+        </tr>
+        <tr>
+            <td>Energy per kWh &mdash; <span x-text="$store.rd.energyRate"></span></td>
+            <td x-text="$store.rd.energyCost"></td>
+        </tr>
+        <tr>
+            <td>Energy Assistance Charge</td>
+            <td x-text="$store.fees.energyAssistance"></td>
+        </tr>
+        <tr>
+            <td>Renewable Energy Standard Adjustment</td>
+            <td x-text="$store.fees.renewableAdjustment"></td>
+        </tr>
+        <tr>
+            <td>Colorado Energy Plan Adjustment</td>
+            <td x-text="$store.fees.coPlanAdjustment"></td>
+        </tr>
+        <tr>
+            <td><strong>Subtotal</strong></td>
+            <td><strong x-text="$store.rd.subtotal"></strong></td>
+        </tr>
+        <tr>
+            <td>Franchise Fee</td>
+            <td x-text="$store.rd.franchiseFee"></td>
+        </tr>
+        <tr>
+            <td>Sales Tax</td>
+            <td x-text="$store.rd.salesTax"></td>
+        </tr>
+        <tr>
+            <td><strong>Total (≈)</strong></td>
+            <td><strong x-text="$store.rd.total"></strong></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <table>
+        <caption>Residential Demand - Time Differentiated Rates (RD-TDR)</caption>
+        <thead>
+        <tr>
+            <th>Charge Type</th>
+            <th>Charge</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>Service and Facility</td>
+            <td x-text="$store.rdtdr.serviceFacilityCharge"></td>
+        </tr>
+        <tr>
+            <td>Distribution Demand per kW &mdash; <span x-text="$store.rdtdr.distributionDemandRate"></span></td>
+            <td x-text="$store.rdtdr.distributionDemandCost"></td>
+        </tr>
+        <tr x-show="$store.season.isWinter">
+            <td>Winter - G&T Demand</td>
+            <td x-text="$store.rdtdr.gtDemand"></td>
+        </tr>
+        <tr x-show="$store.season.isSummer">
+            <td>Summer - G&T Demand</td>
+            <td x-text="$store.rdtdr.gtDemand"></td>
+        </tr>
+        <tr>
+            <td>Energy per kWh - ECA On Peak &mdash; <span x-text="$store.rdtdr.onPeakRate"></span></td>
+            <td x-text="$store.rdtdr.onPeakCost"></td>
+        </tr>
+        <tr>
+            <td>Energy per kWh - ECA Off Peak &mdash; <span x-text="$store.rdtdr.offPeakRate"></span></td>
+            <td x-text="$store.rdtdr.offPeakCost"></td>
+        </tr>
+        <tr>
+            <td>Energy Assistance Charge</td>
+            <td x-text="$store.fees.energyAssistance"></td>
+        </tr>
+        <tr>
+            <td>Renewable Energy Standard Adjustment</td>
+            <td x-text="$store.fees.renewableAdjustment"></td>
+        </tr>
+        <tr>
+            <td>Colorado Energy Plan Adjustment</td>
+            <td x-text="$store.fees.coPlanAdjustment"></td>
+        </tr>
+        <tr>
+            <td><strong>Subtotal</strong></td>
+            <td><strong x-text="$store.rdtdr.subtotal"></strong></td>
+        </tr>
+        <tr>
+            <td>Franchise Fee</td>
+            <td x-text="$store.rdtdr.franchiseFee"></td>
+        </tr>
+        <tr>
+            <td>Sales Tax</td>
+            <td x-text="$store.rdtdr.salesTax"></td>
+        </tr>
+        <tr>
+            <td><strong>Total (≈)</strong></td>
+            <td><strong x-text="$store.rdtdr.total"></strong></td>
+        </tr>
+        </tbody>
+    </table>
+
+</details>
+
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<script>
+    document.addEventListener('alpine:init', function () {
+        Alpine.store('fees', {
+            energyAssistance: 0.50,
+            renewableAdjustment: 1.48,
+            coPlanAdjustment: 1.48,
+            get total() {
+                return this.energyAssistance + this.renewableAdjustment + this.coPlanAdjustment
+            }
+        })
+        Alpine.store('kWh', {
+            on: 0,
+            mid: 0,
+            off: 0,
+            get total() {
+                return this.on + this.mid + this.off
+            }
+        })
+        Alpine.store('season', {
+            value: 'winter',
+            get isSummer() {
+                return this.value === 'summer'
+            },
+            get isWinter() {
+                return this.value === 'winter'
+            },
+            get label() {
+                return this.value[0].toUpperCase() + this.value.substring(1)
+            }
+        })
+        Alpine.store('r', {
+            serviceFacilityCharge: 5.71,
+            get energyRate() {
+                return Alpine.store('season').isWinter ? 0.11690 : 0.12935
+            },
+            get energyCost() {
+                const kWh = Alpine.store('kWh').total
+                return Number((this.energyRate * kWh).toFixed(2))
+            },
+            get subtotal() {
+                return Number((this.serviceFacilityCharge
+                    + this.energyCost
+                    + Alpine.store('fees').total
+                ).toFixed(2))
+            },
+            get franchiseFee() {
+                return Number((this.subtotal * 0.0300).toFixed(2))
+            },
+            get salesTax() {
+                return Number((this.subtotal * 0.0408).toFixed(2))
+            },
+            get total() {
+                return (this.subtotal + this.franchiseFee + this.salesTax).toFixed(2)
+            }
+        })
+        Alpine.store('retou', {
+            serviceFacilityCharge: 5.71,
+            get onPeakRate() {
+                return Alpine.store('season').isWinter ? 0.17006 : 0.27395
+            },
+            get midPeakRate() {
+                return Alpine.store('season').isWinter ? 0.13371 : 0.18564
+            },
+            get offPeakRate() {
+                return Alpine.store('season').isWinter ? 0.09734 : 0.09734
+            },
+            get onPeakCost() {
+                const kWh = Alpine.store('kWh').on
+                return Number((this.onPeakRate * kWh).toFixed(2))
+            },
+            get midPeakCost() {
+                const kWh = Alpine.store('kWh').mid
+                return Number((this.midPeakRate * kWh).toFixed(2))
+            },
+            get offPeakCost() {
+                const kWh = Alpine.store('kWh').off
+                return Number((this.offPeakRate * kWh).toFixed(2))
+            },
+            get subtotal() {
+                return Number((this.serviceFacilityCharge
+                    + this.onPeakCost
+                    + this.midPeakCost
+                    + this.offPeakCost
+                    + Alpine.store('fees').total
+                ).toFixed(2))
+            },
+            get franchiseFee() {
+                return Number((this.subtotal * 0.0300).toFixed(2))
+            },
+            get salesTax() {
+                return Number((this.subtotal * 0.0408).toFixed(2))
+            },
+            get total() {
+                return (this.subtotal + this.franchiseFee + this.salesTax).toFixed(2)
+            }
+        })
+        Alpine.store('roo', {
+            serviceFacilityCharge: 5.71,
+            get energyRate() {
+                return Alpine.store('season').isWinter ? 0.11328 : 0.13313
+            },
+            get energyCost() {
+                const kWh = Alpine.store('kWh').total
+                return Number((this.energyRate * kWh).toFixed(2))
+            },
+            get subtotal() {
+                return Number((this.serviceFacilityCharge
+                    + this.energyCost
+                    + Alpine.store('fees').total
+                ).toFixed(2))
+            },
+            get franchiseFee() {
+                return Number((this.subtotal * 0.0300).toFixed(2))
+            },
+            get salesTax() {
+                return Number((this.subtotal * 0.0408).toFixed(2))
+            },
+            get total() {
+                return (this.subtotal + this.franchiseFee + this.salesTax).toFixed(2)
+            }
+        })
+        Alpine.store('rd', {
+            serviceFacilityCharge: 12.26,
+            energyRate: 0.05934,
+            get energyCost() {
+                const kWh = Alpine.store('kWh').total
+                return Number((this.energyRate * kWh).toFixed(2))
+            },
+            get demandRate() {
+                return Alpine.store('season').isWinter ? 11.88 : 15.20
+            },
+            get demandCost() {
+                const kWh = Alpine.store('kWh').total
+                return Number((this.demandRate * (kWh / 1000)).toFixed(2))
+            },
+            get subtotal() {
+                const kWh = Alpine.store('kWh').total
+                return Number((this.serviceFacilityCharge
+                    + this.demandCost
+                    + this.energyCost
+                    + Alpine.store('fees').total
+                ).toFixed(2))
+            },
+            get franchiseFee() {
+                return Number((this.subtotal * 0.0300).toFixed(2))
+            },
+            get salesTax() {
+                return Number((this.subtotal * 0.0408).toFixed(2))
+            },
+            get total() {
+                return (this.subtotal + this.franchiseFee + this.salesTax).toFixed(2)
+            }
+        })
+        Alpine.store('rdtdr', {
+            serviceFacilityCharge: 5.71,
+            distributionDemandRate: 3.61,
+            onPeakRate: 0.05154,
+            offPeakRate: 0.03162,
+            get distributionDemandCost() {
+                const kWh = Alpine.store('kWh').total
+                return Number((this.distributionDemandRate * kWh / 1000).toFixed(2))
+            },
+            get gtDemand() {
+                return Alpine.store('season').isWinter ? 8.83 : 11.91
+            },
+            get onPeakCost() {
+                const kWh = Alpine.store('kWh').on + Alpine.store('kWh').mid
+                return Number((this.onPeakRate * kWh).toFixed(2))
+            },
+            get offPeakCost() {
+                const kWh = Alpine.store('kWh').off
+                return Number((this.onPeakRate * kWh).toFixed(2))
+            },
+            get subtotal() {
+                return Number((this.serviceFacilityCharge
+                    + this.distributionDemandCost
+                    + this.gtDemand
+                    + this.onPeakCost
+                    + this.offPeakCost
+                    + Alpine.store('fees').total
+                ).toFixed(2))
+            },
+            get franchiseFee() {
+                return Number((this.subtotal * 0.0300).toFixed(2))
+            },
+            get salesTax() {
+                return Number((this.subtotal * 0.0408).toFixed(2))
+            },
+            get total() {
+                return (this.subtotal + this.franchiseFee + this.salesTax).toFixed(2)
+            }
+        })
+    })
+</script>
+</body>
+</html>
