@@ -6,4 +6,4 @@ XcelEnergy's rate sheets.
 I made this because their rate sheet is difficult to navigate and as far as I
 can tell they do not provide a tool to make rate comparisons.
 
-### View the site [here](https://joncfoo.github.com/xcel-co-rates/)
+### View the site [here](https://joncfoo.github.io/xcel-co-rates/)
